@@ -1,0 +1,16 @@
+# Mlflow
+mlruns/
+outputs/
+
+
+.vscode
+
+# Environments
+env
+env3
+.env
+.venv
+env/
+venv/
+
+
