@@ -1,6 +1,4 @@
 # The data set used in this example is from http://archive.ics.uci.edu/ml/datasets/Wine+Quality
-# P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis.
-# Modeling wine preferences by data mining from physicochemical properties. In Decision Support Systems, Elsevier, 47(4):547-553, 2009.
 
 import os
 import warnings
@@ -8,13 +6,20 @@ import sys
 
 import pandas as pd
 import numpy as np
+
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import ElasticNet
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 import mlflow
 import mlflow.sklearn
 
+#mlflow.set_tracking_uri('file:/home/viro/mlrun_store')
 
 def eval_metrics(actual, pred):
     rmse = np.sqrt(mean_squared_error(actual, pred))
@@ -32,30 +37,32 @@ if __name__ == "__main__":
     wine_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wine-quality.csv")
     data = pd.read_csv(wine_path)
 
-    # Split the data into training and test sets. (0.75, 0.25) split.
-    train, test = train_test_split(data)
-
     # The predicted column is "quality" which is a scalar from [3, 9]
-    train_x = train.drop(["quality"], axis=1)
-    test_x = test.drop(["quality"], axis=1)
-    train_y = train[["quality"]]
-    test_y = test[["quality"]]
+    X = data.drop(["quality"], axis=1)
+    y = data[["quality"]]
+
+    # Split the data into training and test sets. (0.75, 0.25) split.
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1)
+    # Scale regressor variables
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
 
     alpha = float(sys.argv[1]) if len(sys.argv) > 1 else 0.5
     l1_ratio = float(sys.argv[2]) if len(sys.argv) > 2 else 0.5
 
-    with mlflow.start_run():
+    with mlflow.start_run(): #experiment_id=1
         model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42)
-        model.fit(train_x, train_y)
+        
+        fit_elasticnet = model.fit(X_train_scaled, y_train)
 
-        predicted_qualities = model.predict(test_x)
+        predicted_qualities = fit_elasticnet.predict(X_test_scaled)
 
-        (rmse, mae, r2) = eval_metrics(test_y, predicted_qualities)
+        (rmse, mae, r2) = eval_metrics(y_test, predicted_qualities)
 
-        print("Elasticnet model (alpha=%f, l1_ratio=%f):" % (alpha, l1_ratio))
-        print("  RMSE: %s" % rmse)
-        print("  MAE: %s" % mae)
-        print("  R2: %s" % r2)
+        print(f'Elasticnet model (alpha={alpha}, l1_ratio={l1_ratio}):')
+        print(f'  RMSE: {rmse}\n  MAE: {mae}\n  R2: {r2}')
 
         #we use the MLflow tracking APIs to log information about each training run
         # hyperparameters
@@ -68,3 +75,23 @@ if __name__ == "__main__":
 
         # serialize the model in a format that MLflow knows how to deploy
         mlflow.sklearn.log_model(model, "model")
+
+
+
+        dict_importance_features = {'Features':list(X_train), 'Importance': abs(fit_elasticnet.coef_)}
+        df_importance_features = pd.DataFrame(dict_importance_features)
+        df_importance_features_sorted = df_importance_features.sort_values(by=['Importance'], ascending=False)
+
+        # plot importance of the features
+        fig = plt.figure(figsize=(15, 10))
+        sns.barplot(data=df_importance_features_sorted, x='Importance', y = 'Features')
+        # Save figure
+        fig.savefig("Importance_features.png")
+        plt.close(fig)
+
+        # Log artifacts (output files)
+        mlflow.log_artifact("Importance_features.png")
+
+
+
+        
