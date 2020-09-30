@@ -3,8 +3,24 @@ name: tutorial
 conda_env: conda.yaml
 
 entry_points:
-  main:
+  # train Sklearn model
+  train:
     parameters:
+      training_data: {type: string, default: "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"}
       alpha: float
       l1_ratio: {type: float, default: 0.1}
-    command: "python train.py {alpha} {l1_ratio}"
+    command: "python train.py {training_data}
+                                --alpha {alpha}
+                                --l1_ratio {l1_ratio}"
+
+  # Use Hyperopt to optimize hyperparams of the train entry_point.
+  hyperopt:
+    parameters:
+      training_data: {type: string, default: "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"}
+      
+    command: "python search_hyperopt.py {training_data}"
+
+  main:
+    parameters:
+      training_data: {type: string, default: "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"}
+    command: "python train.py {training_data}"
