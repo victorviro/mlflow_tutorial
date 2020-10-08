@@ -167,6 +167,21 @@ the server should respond with output similar to:
 
 
 
+## Hyperopt
+
+This section extends the `train.py` script used in the previous section. We use a script called `search_hyperopt.py` which looks for the best hyperparameters for the regression model using the [hyperopt](https://github.com/hyperopt/hyperopt) library. Then it calls the `train.py` script for training the regression model with the hyperparameters found. Note that we need to extend the MLproject configuration file if we want to run this process in the project (the new `entry_point` in the MLproject file is called `hyperopt`). 
+
+We create a new experiment called `Hyperparameters_optimized` via CLI:
+
+```
+mlflow experiments create -n Hyperparameters_optimized
+```
+Now, we can run the project setting the name of the entry_point and the name of the experiment
+```
+mlflow run -e hyperopt --experiment-name Hyperparameters_optimized sklearn_elasticnet_wine 
+```
+
+
 
 
 
