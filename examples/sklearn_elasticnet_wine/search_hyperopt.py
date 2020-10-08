@@ -1,7 +1,7 @@
 
 import click
 
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import train_test_split
@@ -37,10 +37,12 @@ def train(training_data):
         del params['type']
         if regressors_type == 'ElasticNet':
             clf = ElasticNet(**params)
+            clf.fit(X_train_scaled, y_train)
         else:
             return 0
-        accuracy = cross_val_score(clf, X_train_scaled, y_train).mean()
-        return {'loss': -accuracy, 'status': STATUS_OK}
+        y_pred_test = clf.predict(X_test_scaled)
+        loss = mean_squared_error(y_test, y_pred_test)
+        return {'loss': loss, 'status': STATUS_OK}
 
     search_space = hp.choice('regressor_type', [
         {
@@ -50,13 +52,15 @@ def train(training_data):
         },
     ])
 
-    algo=tpe.suggest
+    algorithm = tpe.suggest
 
-    with mlflow.start_run(experiment_id=2) as child_run:
+    #mlflow.create_experiment('Hyperparameters_optimized')
+    #mlflow.set_experiment('Hyperparameters_optimized')
+    with mlflow.start_run() as child_run:
         best_result = fmin(
             fn=objective, 
             space=search_space,
-            algo=algo,
+            algo=algorithm,
             max_evals=16)
         print(f'best parameters: {best_result}')
         alpha, l1_ratio = best_result["alpha"], best_result["l1_ratio"]
