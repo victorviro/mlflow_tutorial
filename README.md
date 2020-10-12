@@ -1,8 +1,29 @@
 
-# MLflow [Tutorial](https://www.mlflow.org/docs/latest/tutorials-and-examples/tutorial.html): 
+# MLflow Tutorial: 
+
+# Introduction
+
+[MLflow](https://github.com/mlflow/mlflow) is an open source platform for managing the end-to-end machine learning lifecycle ([documentation](https://www.mlflow.org/docs/latest/index.html)). MLflow simplifies the machine learning development, including tracking experiments, packaging code into reproducible runs, and sharing and deploying models. MLflow offers a set of APIs that can be used with any existing machine learning library (TensorFlow, PyTorch, XGBoost, etc), wherever we currently run ML code (e.g. in notebooks, standalone applications or the cloud). 
+
+![](https://i.ibb.co/3B7C0yH/ML-lifecycle.png)
 
 
-- Clone the repository via   ` git clone https://github.com/victorviro/mlflow_wine_regression_tutorial.git`
+MLflow's current components are:
+
+- [MLflow Tracking](https://www.mlflow.org/docs/latest/tracking.html): An API to log parameters, code, and results in machine learning experiments and compare them using an interactive UI.
+- [MLflow Projects](https://www.mlflow.org/docs/latest/projects.html): A code packaging format for reproducible runs using Conda and Docker, so we can share our ML code with others.
+- [MLflow Models](https://www.mlflow.org/docs/latest/models.html): A model packaging format and tools that let us easily deploy the same model (from any ML library) to batch and real-time scoring on platforms such as Docker, Apache Spark, Azure ML and AWS SageMaker.
+- [MLflow Model Registry](https://mlflow.org/docs/latest/model-registry.html): A centralized model store, set of APIs, and UI, to collaboratively manage the full lifecycle of MLflow Models.
+
+This tutorial showcases how we can use MLflow end-to-end to train a linear regression model, package the code that trains the model in a reusable and reproducible model format and deploy it into a simple HTTP server that will enable us to score predictions. This tutorial is based on a tutorial available in the documentation of MLflow ([tutorial](https://www.mlflow.org/docs/latest/tutorials-and-examples/tutorial.html)).
+
+
+# Tutorial
+
+## First steps
+
+
+- You can clone the repository via ` git clone https://github.com/victorviro/mlflow_wine_regression_tutorial.git`
 - Install MLflow and scikit-learn:
 ```
 python3 -m venv venv
@@ -11,7 +32,7 @@ pip install mlflow
 pip install scikit-learn
 pip install boto3
 ```
-- Install conda
+- Install [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
 
 - `cd` into the `examples` directory 
 
@@ -180,6 +201,8 @@ Now, we can run the project setting the name of the entry_point and the name of 
 ```
 mlflow run -e hyperopt --experiment-name Hyperparameters_optimized sklearn_elasticnet_wine 
 ```
+
+
 
 
 
