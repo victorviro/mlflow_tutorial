@@ -202,7 +202,19 @@ Now, we can run the project setting the name of the entry_point and the name of 
 mlflow run -e hyperopt --experiment-name Hyperparameters_optimized sklearn_elasticnet_wine 
 ```
 
+# Keras MNIST classification
 
+Another example: classification on the MNIST dataset with Keras. We have created a directory called `mnist_classification` into the `examples` directory and we have added a python file for training the model (`train.py`), a conda file specifying the dependencies, and a MLproject configuration file.
+
+We create a new experiment called `MNIST_classification` via CLI:
+
+```
+mlflow experiments create -n MNIST_classification
+```
+Now, we can run the project setting the name of the entry_point and the name of the experiment
+```
+mlflow run -e main --experiment-name MNIST_classification mnist_classification 
+```
 
 
 
