@@ -3,7 +3,6 @@ mlruns/
 outputs/
 *.png
 
-
 .vscode
 
 # Environments
@@ -15,3 +14,5 @@ env/
 venv/
 
 
+postgre_artifacts/
+myREADME.md

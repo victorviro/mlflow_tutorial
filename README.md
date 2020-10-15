@@ -23,18 +23,10 @@ This tutorial showcases how we can use MLflow end-to-end to train a linear regre
 ## First steps
 
 
-- You can clone the repository via ` git clone https://github.com/victorviro/mlflow_wine_regression_tutorial.git`
-- Install MLflow and scikit-learn:
-```
-python3 -m venv venv
-source venv/bin/activate
-pip install mlflow
-pip install scikit-learn
-pip install boto3
-```
-- Install [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
-
-- `cd` into the `examples` directory 
+- We clone the repository via `git clone https://github.com/victorviro/mlflow_tutorial.git`
+- We create an environment and install MLflow and scikit-learn.
+- We install [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
+- `cd` into the `examples` directory.
 
 ## Traininig the model:
 
@@ -60,7 +52,7 @@ python sklearn_elasticnet_wine/train.py --alpha 0.8 --l1_ratio 0.1
 
 After running this, MLflow has logged information about our experiment runs and they are stored locally in the directory called `mlruns`. Note that MLflow runs can be recorded to local files, to a SQLAlchemy compatible database, or remotely to a tracking server. By default, the MLflow Python API logs runs locally to files in the `mlruns` directory we mentioned. 
 
-To log runs remotely, we can set the `MLFLOW_TRACKING_URI` environment variable to a tracking server’s URI or call `mlflow.set_tracking_uri()` in the code. For instance, if we want store runs locally but we prefer to save it to a designated location, we could specify it at the beginning of the program as follows:
+To log runs remotely, we can set the `MLFLOW_TRACKING_URI` environment variable to a tracking server’s URI as we will see in the next example or call `mlflow.set_tracking_uri()` in the code. For instance, if we want store runs locally but we prefer to save it to a designated location, we could specify it at the beginning of the program as follows:
 ```
 mlflow.set_tracking_uri('file:/home/viro/mlrun_store')
 ```
@@ -77,11 +69,11 @@ mlflow experiments create -n new_experiment
 ```
 > Created experiment 'new_experiment' with id 1
 
-A new dir folder `1` is added into the `mlruns` directory where runs in this experiment will be tracked.
+A new directory `1` is added into the `mlruns` directory where runs in this experiment will be tracked.
 
 We can specify in the code the experiment where we want to save the run: `mlflow.start_run(experiment_id=1)`.
 
-If we record runs in an MLflow Project we can run the training remotely specifying the experiment as we will see later.
+If we record runs in an MLflow Project we can run the training remotely specifying the experiment as we will see later in this example.
 
 
 ## Comparing the Models:
@@ -128,9 +120,9 @@ mlflow run sklearn_elasticnet_wine -P alpha=0.4011
 
 After running this command, MLflow runs our training code in a new Conda environment with the dependencies specified in `conda.yaml` (a new run is recoded in `mlruns` directory). 
 
-If we go to the UI we can see this run is added, but the source is `sklearn_elasticnet_wine` (instead of `train.py` like in the previous runs). Note that, in this case, the artifacts are not recorded.
+If we go to the UI we can see this run is added, but the source is `sklearn_elasticnet_wine` (instead of `train.py` like in the previous runs). ¿Note that, in this case, the artifacts are not recorded.?
 
-Alternatively, we can run the project specifying the experiment (in this case, the artifacts are recorded). The experiment created by default has the ID 0. The second we have created has ID 1 so we can run the project with the command:
+Alternatively, we can run the project specifying the experiment ¿(in this case, the artifacts are recorded)?. The experiment created by default has the ID 0. The second we have created has ID 1 so we can run the project with the command:
 
 ```
 mlflow run -e train --experiment-id 1 sklearn_elasticnet_wine -P alpha=0.11
@@ -214,17 +206,66 @@ mlflow experiments create -n MNIST_classification
 Now, we can run the project setting the name of the entry_point and the name of the experiment
 ```
 mlflow run -e main --experiment-name MNIST_classification mnist_classification 
+
+```
+## Using postgreSQL as a backend store
+We can use PostgreSQL database as a backend store. After install it, we need to set it up...
+
+Lets use the command line with psql:
+```
+sudo -u postgres psql
+```
+In the postgre console, we create a database `mlflow_db`, and a user `mlflow_user` with password `mlflow`:
+```
+CREATE DATABASE mlflow_db;
+CREATE USER mlflow_user WITH ENCRYPTED PASSWORD 'mlflow';
+GRANT ALL PRIVILEGES ON DATABASE mlflow_db TO mlflow_user;
 ```
 
+We also create a local folder to store the artifacts: `home/viro/artifact_root`
 
 
+The difference with local storage, where everything is stored in one directory, is that in this case we have two store locations: `--backend-store-uri` for everything except artifacts and `--default-artifact-root` for artifacts only. The database needs to be encoded as `dialect+driver://username:password@host:port/database`.
 
+We launch the tracking server as the local server (we need install psycopg2):
 
+```
+pip install psycopg2
+```
 
+```
+mlflow server --backend-store-uri postgresql://mlflow_user:mlflow@localhost/mlflow_db \
+        --default-artifact-root file:/home/viro/artifact_root \
+        --host 0.0.0.0 \
+        --port 5000 
+```
 
+Now the Tracking server should be available at the following URL: http://0.0.0.0:5000.
 
+We can set the tracking URI at the beginning of our program, with the same `host:port` as we used to configure the mlflow server (`mlflow.set_tracking_uri('http://0.0.0.0:5000')`) or we can do it with the CLI setting the following environmental variable:
+```
+export MLFLOW_TRACKING_URI='http://0.0.0.0:5000'
+```
 
+Now we can run the project:
 
+```
+mlflow run -e main mnist_classification 
+```
 
+We can look the run up in our browser.
+
+We can also examine the `mlflow_db` database. We connect to the database.
+```
+psql -U mlflow_user -h 127.0.0.1 -d mlflow_db
+```
+and enter the password (mlflow). In the postgre console we can list all the tables: 
+```
+\dt
+```
+We show the table metrics:
+```
+select * from metrics;
+```
 
 
